@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Banking Application</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Roboto', sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 20px;
+            color: #333;
+        }
+        h1, h2 {
+            color: #4CAF50;
+            text-align: center;
+        }
+        .container {
+            max-width: 800px;
+            margin: auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+        form {
+            display: flex;
+            flex-direction: column;
+            margin-bottom: 20px;
+        }
+        input, button {
+            padding: 12px;
+            margin: 5px 0;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 16px;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        .result {
+            margin-top: 20px;
+            padding: 10px;
+            background: #f9f9f9;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+        th {
+            background-color: #4CAF50;
+            color: white;
+        }
+        .error {
+            color: red;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>Banking Application</h1>
+
+        <!-- Customer Section -->
+        <h2>Manage Customers</h2>
+        <form id="customerForm">
+            <input type="text" id="customerId" placeholder="Customer ID" required>
+            <input type="text" id="customerName" placeholder="Customer Name" required>
+            <input type="text" id="customerAddress" placeholder="Customer Address" required>
+            <input type="text" id="customerPhone" placeholder="Customer Phone" required>
+            <input type="email" id="customerEmail" placeholder="Customer Email" required>
+            <button type="submit">Add Customer</button>
+        </form>
+        <button id="getAllCustomers">Get All Customers</button>
+        <div id="customerResult" class="result"></div>
+
+        <!-- Account Section -->
+        <h2>Manage Accounts</h2>
+        <form id="accountForm">
+            <input type="text" id="accountNumber" placeholder="Account Number" required>
+            <input type="text" id="customerAccountId" placeholder="Customer ID" required>
+            <button type="submit">Add Account</button>
+        </form>
+        <button id="getAllAccounts">Get All Accounts</button>
+        <div id="accountResult" class="result"></div>
+
+        <!-- Deposit Section -->
+        <h2>Make a Deposit</h2>
+        <form id="depositForm">
+            <input type="text" id="depositAccountNumber" placeholder="Account Number" required>
+            <input type="number" id="depositAmount" placeholder="Deposit Amount" required>
+            <button type="submit">Deposit</button>
+        </form>
+        <div id="depositResult" class="result"></div>
+
+        <!-- Withdrawal Section -->
+        <h2>Make a Withdrawal</h2>
+        <form id="withdrawalForm">
+            <input type="text" id="withdrawalAccountNumber" placeholder="Account Number" required>
+            <input type="number" id="withdrawalAmount" placeholder="Withdrawal Amount" required>
+            <button type="submit">Withdraw</button>
+        </form>
+        <div id="withdrawalResult" class="result"></div>
+
+        <!-- Loan Section -->
+        <h2>Apply for a Loan</h2>
+        <form id="loanForm">
+            <input type="text" id="loanCustomerId" placeholder="Customer ID" required>
+            <input type="number" id="loanAmount" placeholder="Loan Amount" required>
+            <input type="number" id="interestRate" placeholder="Interest Rate (%)" required>
+            <input type="number" id="loanTerm" placeholder="Loan Term (Years)" required>
+            <button type="submit">Apply for Loan</button>
+        </form>
+        <button id="getLoansByCustomer">Get Loans by Customer ID</button>
+        <div id="loanResult" class="result"></div>
+    </div>
+
+    <script>
+        // Helper function to create a table
+        function createTable(data) {
+            let table = '<table><thead><tr>';
+            Object.keys(data[0]).forEach(key => {
+                table += `<th>${key.charAt(0).toUpperCase() + key.slice(1)}</th>`;
+            });
+            table += '</tr></thead><tbody>';
+            data.forEach(item => {
+                table += '<tr>';
+                Object.values(item).forEach(value => {
+                    table += `<td>${value}</td>`;
+                });
+                table += '</tr>';
+            });
+            table += '</tbody></table>';
+            return table;
+        }
+
+        // Customer Functions
+        document.getElementById('customerForm').addEventListener('submit', function(event) {
+            event.preventDefault();
+            const customerId = document.getElementById('customerId').value;
+            const customerName = document.getElementById('customerName').value;
+            const customerAddress = document.getElementById('customerAddress').value;
+            const customerPhone = document.getElementById('customerPhone').value;
+            const customerEmail = document.getElementById('customerEmail').value;
+
+            fetch('/api/bank/customers', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    id: customerId,
+                    name: customerName,
+                    address: customerAddress,
+                    phone: customerPhone,
+                    email: customerEmail
+                })
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error! Status: ${response.status}`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                document.getElementById('customerResult').innerHTML = JSON.stringify(data);
+            })
+            .catch(err => {
+                document.getElementById('customerResult').innerHTML = `<div class="error">Error: ${err.message}</div>`;
+            });
+        });
+
+        document.getElementById('getAllCustomers').addEventListener('click', function() {
+            fetch('/api/bank/customers')
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('customerResult').innerHTML = createTable(data);
+            })
+            .catch(err => {
+                document.getElementById('customerResult').innerHTML = `<div class="error">Error: ${err}</div>`;
+            });
+        });
+
+        // Account Functions
+        document.getElementById('accountForm').addEventListener('submit', function(event) {
+            event.preventDefault();
+            const accountNumber = document.getElementById('accountNumber').value;
+            const customerId = document.getElementById('customerAccountId').value;
+
+            fetch('/api/bank/accounts', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ accountNumber, customerId })
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error! Status: ${response.status}`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                document.getElementById('accountResult').innerHTML = JSON.stringify(data);
+            })
+            .catch(err => {
+                document.getElementById('accountResult').innerHTML = `<div class="error">Error: ${err.message}</div>`;
+            });
+        });
+
+        document.getElementById('getAllAccounts').addEventListener('click', function() {
+            fetch('/api/bank/accounts')
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('accountResult').innerHTML = createTable(data);
+            })
+            .catch(err => {
+                document.getElementById('accountResult').innerHTML = `<div class="error">Error: ${err}</div>`;
+            });
+        });
+
+        // Deposit Functions
+        document.getElementById('depositForm').addEventListener('submit', function(event) {
+            event.preventDefault();
+            const accountNumber = document.getElementById('depositAccountNumber').value;
+            const amount = document.getElementById('depositAmount').value;
+
+            fetch('/api/bank/deposits', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ account: { accountNumber }, amount })
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error! Status: ${response.status}`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                document.getElementById('depositResult').innerHTML = JSON.stringify(data);
+            })
+            .catch(err => {
+                document.getElementById('depositResult').innerHTML = `<div class="error">Error: ${err.message}</div>`;
+            });
+        });
+
+        // Withdrawal Functions
+        document.getElementById('withdrawalForm').addEventListener('submit', function(event) {
+            event.preventDefault();
+            const accountNumber = document.getElementById('withdrawalAccountNumber').value;
+            const amount = document.getElementById('withdrawalAmount').value;
+
+            fetch('/api/bank/withdrawals', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ account: { accountNumber }, amount })
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error! Status: ${response.status}`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                document.getElementById('withdrawalResult').innerHTML = JSON.stringify(data);
+            })
+            .catch(err => {
+                document.getElementById('withdrawalResult').innerHTML = `<div class="error">Error: ${err.message}</div>`;
+            });
+        });
+
+        // Loan Functions
+        document.getElementById('loanForm').addEventListener('submit', function(event) {
+            event.preventDefault();
+            const customerId = document.getElementById('loanCustomerId').value;
+            const loanAmount = document.getElementById('loanAmount').value;
+            const interestRate = document.getElementById('interestRate').value;
+            const loanTerm = document.getElementById('loanTerm').value;
+
+            fetch('/api/bank/loans', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ customerId, loanAmount, interestRate, loanTerm })
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error! Status: ${response.status}`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                document.getElementById('loanResult').innerHTML = JSON.stringify(data);
+            })
+            .catch(err => {
+                document.getElementById('loanResult').innerHTML = `<div class="error">Error: ${err.message}</div>`;
+            });
+        });
+
+        document.getElementById('getLoansByCustomer').addEventListener('click', function() {
+            const customerId = document.getElementById('loanCustomerId').value;
+            fetch(`/api/bank/loans/customer/${customerId}`)
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('loanResult').innerHTML = createTable(data);
+            })
+            .catch(err => {
+                document.getElementById('loanResult').innerHTML = `<div class="error">Error: ${err}</div>`;
+            });
+        });
+    </script>
+</body>
+</html>
